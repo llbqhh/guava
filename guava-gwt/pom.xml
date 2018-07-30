@@ -5,7 +5,7 @@
   <parent>
     <groupId>com.google.guava</groupId>
     <artifactId>guava-parent</artifactId>
-    <version>24.0-SNAPSHOT</version>
+    <version>HEAD-jre-SNAPSHOT</version>
   </parent>
   <artifactId>guava-gwt</artifactId>
   <name>Guava GWT compatible libs</name>
@@ -19,8 +19,8 @@
   <properties>
     <!-- We skip GWT tests by default. To run, pass -Dgwt.test.include=**/GwtTestSuite.java -->
     <gwt.test.include>**/DoesNotMatchAnyTests.java</gwt.test.include>
-    <gwt.version>2.8.0</gwt.version>
-    <gwt.plugin.version>2.8.0</gwt.plugin.version>
+    <gwt.version>2.8.2</gwt.version>
+    <gwt.plugin.version>2.8.2</gwt.plugin.version>
     <gwt.logLevel>WARN</gwt.logLevel>
   </properties>
   <repositories>
@@ -94,6 +94,10 @@
       <version>${truth.version}</version>
       <classifier>gwt</classifier>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.checkerframework</groupId>
+      <artifactId>checker-qual</artifactId>
     </dependency>
   </dependencies>
   <build>
@@ -213,14 +217,12 @@
             <goals><goal>run</goal></goals>
             <configuration>
               <target name="copy-gwt-resources">
-                <copy toDir="${project.build.directory}/guava-gwt-sources"
-                      verbose="true">
+                <copy toDir="${project.build.directory}/guava-gwt-sources">
                   <fileset dir="${project.build.directory}/guava-sources">
                     <contains text="@GwtCompatible"/>
                   </fileset>
                 </copy>
-                <copy toDir="${project.build.directory}/guava-test-gwt-sources"
-                      verbose="true">
+                <copy toDir="${project.build.directory}/guava-test-gwt-sources">
                   <fileset dir="${project.build.directory}/guava-test-sources">
                     <contains text="@GwtCompatible"/>
                   </fileset>
@@ -246,6 +248,12 @@
               <logLevel>${gwt.logLevel}</logLevel>
               <validateOnly>true</validateOnly>
               <sourceLevel>1.8</sourceLevel>
+              <!--
+                To avoid "java.io.IOException: User limit of inotify watches reached" under JDK10.
+                Presumably we don't need inotify, since we don't intend to change files during the
+                build?
+                -->
+              <extraJvmArgs>-Dgwt.watchFileChanges=false</extraJvmArgs>
             </configuration>
           </execution>
           <!--
@@ -298,6 +306,8 @@
               <!-- Keep these timeouts very large because, if we hit the timeout, the tests silently pass :( -->
               <testTimeOut>86400 <!-- seconds --></testTimeOut>
               <testMethodTimeout>1440 <!-- minutes --></testMethodTimeout>
+              <!-- Presumably we want watchFileChanges=false here, since we want it for compile: -->
+              <extraJvmArgs>-Dgwt.watchFileChanges=false</extraJvmArgs>
             </configuration>
           </execution>
         </executions>
